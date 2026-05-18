@@ -48,7 +48,27 @@ class Player(Turtle):
         self.right(10)
 
     def fire(self):
-        self.bullets.append(Bullet(self))
+        if len(self.bullets)<5:
+            new_bullet = Bullet(self)
+            self.bullets.append(new_bullet)
+
+
+class Score(Turtle):
+    def __init__(self, x, y, color):
+        super().__init__()
+        self.ht()
+        self.color("white")
+        self.pu()
+        self.goto(x, y)
+        self.score = 0
+        self.write(f"Score: {self.score}")
+        
+    def update_score(self):
+        self.clear()
+        self.write(f"Score: {self.score}")
+        
+      
+
 
 class Block(Turtle):
     def __init__(self, x, y, color):
@@ -63,17 +83,19 @@ class Block(Turtle):
         self.health = 3
         self.alive = True
     
-    def hit(self,blocks,player):
+    def hit(self,blocks,player, scores):
         self.health -= 1
         if self.health == 2:
             self.color("orange")
         elif self.health == 1:
             self.color("red")
         elif self.health == 0:
-        
-            player.score += 1
             self.ht()
             blocks.remove(self)
+            scores.score += 1
+            
+            
+
             
 
 class Bullet(Turtle):
@@ -101,7 +123,6 @@ class Bullet(Turtle):
         if self in self.player.bullets:
             self.player.bullets.remove(self)
                  
-    
 
 
 def update():
@@ -113,13 +134,15 @@ def update():
             for block in blocks:
                 if bullet.distance(block) < 20:
                     bullet.die()
-                    block.hit(blocks, p1)
+                    block.hit(blocks, p1, score1)
+                    score1.update_score()
         for bullet in p2.bullets:
             bullet.move()
             for block in blocks:
                 if bullet.distance(block) < 20:
                     bullet.die()
-                    block.hit(blocks, p2)
+                    block.hit(blocks, p2, score2)
+                    score2.update_score()
     
 
     screen.ontimer(update,30)
@@ -145,8 +168,8 @@ blocks = []
 bullets = []
 p1 = Player(-70, -180, "red",screen, "d", "a", "w",1)
 p2 = Player(70,-180,"blue",screen, "Right","Left", "Up",1)
-
-
+score1 = Score(-200,200,"white")
+score2 = Score(200,200, "white")
 
 screen.tracer(0)
 for y in range(190,120,-20):
