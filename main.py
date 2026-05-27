@@ -1,7 +1,9 @@
 from turtle import *
 import random
 import time
+import sys
 
+start = time.time()
 def generate_color():
     return f"#{random.randint(0, 0xFFFFFF):06x}"
 
@@ -54,18 +56,20 @@ class Player(Turtle):
 
 
 class Score(Turtle):
-    def __init__(self, x, y, color):
+    def __init__(self, x, y, player):
         super().__init__()
         self.ht()
         self.color("white")
         self.pu()
         self.goto(x, y)
         self.score = 0
-        self.write(f"Score: {self.score}")
-        
+        self.write(f"Score: {player.score}")
+        self.player = player
+
     def update_score(self):
         self.clear()
-        self.write(f"Score: {self.score}")
+        self.write(f"Score: {self.player.score}", font=("Arial",15,"bold"))
+
         
       
 
@@ -92,7 +96,8 @@ class Block(Turtle):
         elif self.health == 0:
             self.ht()
             blocks.remove(self)
-            scores.score += 1
+            player.score += 1
+            scores.update_score()
             
             
 
@@ -115,7 +120,7 @@ class Bullet(Turtle):
         self.forward(10)
         if self.xcor() > 130 or self.xcor() < -130:
             self.setheading(180 - self.heading())
-        if self.ycor() > 130:
+        if self.ycor() > 200:
             self.die()
 
     def die(self):
@@ -123,29 +128,48 @@ class Bullet(Turtle):
         if self in self.player.bullets:
             self.player.bullets.remove(self)
                  
+def create_rows(blocks):
+    for x in range(-120,130,20):
+        if len(blocks) % 3 == 0:
+            blocks.append(Block(x,190,"lightgray"))
+        elif len (blocks) % 3 == 1:
+            blocks.append(Block(x,190, "gray"))
+        else:
+            blocks.append(Block(x,190, "darkgray"))
+    return blocks
 
 
 def update():
-    # if time.time() - start > 2:
-    #     start = time.time()
-    if p1.alive and p2.alive:
-        for bullet in p1.bullets:
-            bullet.move()
-            for block in blocks:
-                if bullet.distance(block) < 20:
-                    bullet.die()
-                    block.hit(blocks, p1, score1)
-                    score1.update_score()
-        for bullet in p2.bullets:
-            bullet.move()
-            for block in blocks:
-                if bullet.distance(block) < 20:
-                    bullet.die()
-                    block.hit(blocks, p2, score2)
-                    score2.update_score()
-    
+    global start, blocks, screen
 
-    screen.ontimer(update,30)
+    if p1.alive and p2.alive:
+        if time.time() - start > 2:
+            start = time.time()
+            screen.tracer(0)
+            for block in blocks:
+                block.goto(block.xcor(), block.ycor()-20)
+                if block.ycor()< -140:
+                    p1.alive = False
+                    sys.exit()
+            blocks = create_rows(blocks)
+            screen.tracer(1)
+        for p in players:
+            for bullet in p.bullets:
+                bullet.move()
+                for block in blocks:
+                    for s in scores:
+                        if bullet.distance(block) < 20:
+                            bullet.die()
+                            block.hit(blocks, p, s)
+                            s.update_score()
+                        if block.distance(p) < 20:
+                            p.alive = False
+                            print("YOU DIED HAHAHAHAHA")
+                            sys.exit()
+                            
+                           
+
+    screen.ontimer(update,10)
 
    
         
@@ -166,10 +190,13 @@ playing_area()
 
 blocks = []
 bullets = []
+
 p1 = Player(-70, -180, "red",screen, "d", "a", "w",1)
 p2 = Player(70,-180,"blue",screen, "Right","Left", "Up",1)
-score1 = Score(-200,200,"white")
-score2 = Score(200,200, "white")
+players = [p1, p2]
+score1 = Score(-230,200, p1)
+score2 = Score(150,200, p2)
+scores = [score1,score2]
 
 screen.tracer(0)
 for y in range(190,120,-20):
@@ -186,22 +213,9 @@ update()
 
 screen.exitonclick()
 
-### CLASS and FUNCTION DEFINITIONS ###
 
 
-
-
-
-
-
-
-
-
-### PROGRAM ###
 screen = Screen()
 
 
 
-
-
-screen.exitonclick()
